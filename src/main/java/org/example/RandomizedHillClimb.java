@@ -3,44 +3,54 @@ package org.example;
 import java.util.Random;
 
 public class RandomizedHillClimb {
-    public double f( double firstx, double firsty){
-        return Math.pow(1.5 + firstx + firstx * firsty, 2) + Math.pow(2.25 + firstx - firstx * firsty * firsty, 2) + Math.pow(2.625 + firstx - firstx * Math.pow(firsty, 3), 2);
-    }
-    public double[] RHC(double[] sp, int p, double z, long seed){
-        Random randomSeed = new Random(seed);
-        double[] currentsol = sp;
-        double currentValue = f(currentsol[0],currentsol[1]);
-        int numSolutionGen = 0;
-        while(true){
-            double[][] neighbors = new double[p][2];
+    public double[] RHC(double[] sp, int p, double z, Random rand){
+        double[] currentSolution = sp;
+        double currentValue = evaluateFunction(sp[0], sp[1]);
+        int solutionsGenerated = 1;
 
-            for(int i = 0; i< p; i++){
-                double z1 = randomSeed.nextDouble() * z - z / 2;
-                double z2 = randomSeed.nextDouble() * z - z /2;
-                neighbors[i][0] = currentsol[0] + z1;
-                neighbors[i][1] = currentsol[1] + z2;
-                double neighborValue = f(neighbors[i][0], neighbors[i][1]);
+        while (true) {
+            double bestNeighborValue = Double.NEGATIVE_INFINITY;
+            double[] bestNeighborSolution = currentSolution.clone();
 
-                numSolutionGen++;
+            for (int i = 0; i < p; i++) {
+                double neighborX = currentSolution[0] + (rand.nextDouble() * z - z / 2.0);
+                double neighborY = currentSolution[1] + (rand.nextDouble() * z - z / 2.0);
 
-                if(neighborValue > currentValue){
-                    currentValue = neighborValue;
-                    currentsol[0] = neighbors[i][0];
-                    currentsol[1] = neighbors[i][1];
+                // Ensure that the generated neighbor is within the specified range
+                neighborX = Math.max(-4.2, Math.min(4.2, neighborX));
+                neighborY = Math.max(-4.2, Math.min(4.2, neighborY));
+
+                double neighborValue = evaluateFunction(neighborX, neighborY);
+
+                if (neighborValue > bestNeighborValue) {
+                    bestNeighborValue = neighborValue;
+                    bestNeighborSolution[0] = neighborX;
+                    bestNeighborSolution[1] = neighborY;
                 }
+                solutionsGenerated++;
             }
-            boolean improved = false;
-            for(int i = 0; i < p; i++){
-                double neighborValue = f(neighbors[i][0], neighbors[i][1]);
-                if(neighborValue > currentValue){
-                    improved = true;
-                    break;
-                }
-            }
-            if(!improved){
+
+            if (bestNeighborValue > currentValue) {
+                currentSolution = bestNeighborSolution;
+                currentValue = bestNeighborValue;
+            } else {
+                // No better neighbor found, terminate
                 break;
             }
         }
-        return new double[]{currentsol[0], currentsol[1], currentValue, numSolutionGen};
+
+        return new double[]{currentSolution[0], currentSolution[1], currentValue, solutionsGenerated};
     }
+
+    public static double evaluateFunction(double x, double y) {
+        return Math.pow(1.5 + x + x * y, 2) + Math.pow(2.25 + x - x * y * y, 2) + Math.pow(2.625 + x - x * y * y * y, 2);
+    }
+
+    public static void printSolution(double[] solution) {
+        System.out.println("Best Solution (x, y): (" + solution[0] + ", " + solution[1] + ")");
+        System.out.println("Function Value: " + solution[2]);
+        System.out.println("Solutions Generated: " + solution[3]);
+    }
+
+
 }
